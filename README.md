@@ -1,52 +1,66 @@
-# Data Engineering Infrastructure Project
+# 🚀 Data Engineering Infrastructure Project
 
-## Overview
-This project provides a complete data engineering infrastructure setup using modern tools and technologies. It includes workflow orchestration, data processing, storage, and visualization components.
+![Data Engineering](https://img.shields.io/badge/Data-Engineering-blue)
+![Docker](https://img.shields.io/badge/Docker-Compose-orange)
+![Apache](https://img.shields.io/badge/Apache-Ecosystem-red)
 
-## Users and Access
+```
+  _____        _        _____                 _
+ |  __ \      | |      |  __ \               (_)
+ | |  | | __ _| |_ __ _| |__) |___ _ __   ___ _  ___ _ __   __ _
+ | |  | |/ _` | __/ _` |  _  // _ \ '_ \ / __| |/ _ \ '_ \ / _` |
+ | |__| | (_| | || (_| | | \ \  __/ | | | (__| |  __/ | | | (_| |
+ |_____/ \__,_|\__\__,_|_|  \_\___|_| |_|\___|_|\___|_| |_|\__,_|
+```
 
-### Database Credentials
-- **Airflow DB**: airflow/airflow
-- **App PostgreSQL**: appuser/apppassword
-- **Superset PostgreSQL**: superset/superset_password
-- **ClickHouse**: clickhouse/clickhouse
+## 🌐 Overview
 
-### Service Credentials
+This project provides a complete **data engineering infrastructure** setup using modern tools and technologies. It includes workflow orchestration, data processing, storage, and visualization components.
+
+## 🔑 Users and Access
+
+### 🔒 Database Credentials
+- **Airflow DB**: `airflow/airflow`
+- **App PostgreSQL**: `appuser/apppassword`
+- **Superset PostgreSQL**: `superset/superset_password`
+- **ClickHouse**: `clickhouse/clickhouse`
+
+### ⚙️ Service Credentials
 - **MinIO**:
-  - Root: minio/minio123
-  - Access: minio/minio
-- **Airflow Web UI**: ${_AIRFLOW_WWW_USER_USERNAME}/${_AIRFLOW_WWW_USER_PASSWORD} (from .env)
-- **Superset Admin**: admin/admin
+  - Root: `minio/minio123`
+  - Access: `minio/minio`
+- **Airflow Web UI**: `${_AIRFLOW_WWW_USER_USERNAME}/${_AIRFLOW_WWW_USER_PASSWORD}` (from .env)
+- **Superset Admin**: `admin/admin`
 - **Jupyter**: root user (no password)
 
-### Note
-Credentials marked with ${VARIABLE} should be set in the .env file before starting services.
+> **Note**
+> Credentials marked with `${VARIABLE}` should be set in the `.env` file before starting services.
 
-## Main Components
+## 🧩 Main Components
 
-### Workflow Orchestration
+### ⏱️ Workflow Orchestration
 - **Apache Airflow**: For scheduling and monitoring workflows
   - Located in `airflow/` directory
   - Includes sample DAGs in `airflow/dags/`
 
-### Data Processing
+### 🔄 Data Processing
 - **Apache Spark**: For batch and stream processing
   - Spark configuration in `spark/conf/`
   - Sample applications in `spark/app/`
 
-### Storage
+### 💾 Storage
 - **MinIO**: S3-compatible object storage
   - Sample data stored in `minio/` directory
 - **PostgreSQL**: Relational database
   - Configuration in `postgres/` directory
 
-### Analytics & Visualization
+### 📊 Analytics & Visualization
 - **Jupyter Notebooks**: For data exploration
   - Located in `notebooks/` directory
 - **Apache Superset**: For data visualization
   - Configuration in `config/superset_config.py`
 
-## Setup Instructions
+## 🛠️ Setup Instructions
 
 1. Ensure Docker and Docker Compose are installed
 2. Clone this repository
@@ -65,7 +79,7 @@ Credentials marked with ${VARIABLE} should be set in the .env file before starti
    - **Spark UI**: http://localhost:4040 (job monitoring)
    - **ClickHouse**: http://localhost:8123 (analytical DB)
 
-## Directory Structure
+## 📂 Directory Structure
 
 ```
 .
@@ -81,18 +95,18 @@ Credentials marked with ${VARIABLE} should be set in the .env file before starti
 └── README.md         # This file
 ```
 
-## Usage Examples
+## 💡 Usage Examples
 
-### Running a Spark Job
+### 🚀 Running a Spark Job
 ```bash
 docker-compose exec spark spark-submit /opt/spark/app/your_app.py
 ```
 
-### Creating a new Airflow DAG
+### ⏱️ Creating a new Airflow DAG
 1. Add your Python DAG file to `airflow/dags/`
 2. Airflow will automatically pick it up
 
-### Accessing MinIO
-- Access key: minioadmin
-- Secret key: minioadmin
-- Bucket: new (contains sample data)
+### 📦 Accessing MinIO
+- Access key: `minioadmin`
+- Secret key: `minioadmin`
+- Bucket: `new` (contains sample data)
