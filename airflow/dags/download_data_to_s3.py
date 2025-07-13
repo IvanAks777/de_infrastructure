@@ -40,7 +40,7 @@ def get_api_data():
 def save_json_to_s3():
     # Проверка подключения к S3
     try:
-        hook = S3Hook(aws_conn_id="s3_conn")
+        hook = S3Hook(aws_conn_id="minios3_conn")
         hook.check_for_bucket(bucket_name="weather")
     except Exception as e:
         logger.error(f"Ошибка подключения к S3: {e}")
@@ -49,7 +49,7 @@ def save_json_to_s3():
     data = get_api_data()
     if data:
         try:
-            hook = S3Hook(aws_conn_id="s3_conn")
+            hook = S3Hook(aws_conn_id="minios3_conn")
             hook.load_string(
                 string_data=data,
                 key="weather_data.json",

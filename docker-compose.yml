@@ -141,8 +141,7 @@ services:
             --conn-extra '{"endpoint_url": "http://minio:9000"}'
 
   minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+    image: bitnami/minio:2024.7.26
     environment:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio123
@@ -253,6 +252,8 @@ services:
   # Сервис Zookeeper (требуется для работы Kafka)
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
+    hostname: zk
+    container_name: zk
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -262,18 +263,21 @@ services:
       - de_infrastructure
 
   # Сервис Kafka для обработки потоковых данных
-  kafka:
+  kafka1:
     image: confluentinc/cp-kafka:7.4.1
+    hostname: kafka1
     depends_on:
       - zookeeper
     environment:
       # Настройки для работы Kafka
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181  # Подключение к Zookeeper
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092  # Доступ внутри и снаружи сети
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT  # Протоколы безопасности
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT  # Внутренний listener
+      KAFKA_MIN_INSYNC_REPLICAS: 2
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3  # Фактор репликации
+      KAFKA_NUM_PARTITIONS: 3
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"  # Автосоздание топиков
       KAFKA_DELETE_TOPIC_ENABLE: "true"  # Разрешение удаления топиков
     ports:
@@ -284,36 +288,42 @@ services:
 
   kafka2:
     image: confluentinc/cp-kafka:7.4.1
+    hostname: kafka2
     depends_on:
       - zookeeper
     environment:
       # Настройки для работы Kafka
       KAFKA_BROKER_ID: 2
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181  # Подключение к Zookeeper
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9093,PLAINTEXT_HOST://localhost:29093  # Доступ внутри и снаружи сети
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9093,PLAINTEXT_HOST://localhost:29093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT  # Протоколы безопасности
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT  # Внутренний listener
+      KAFKA_MIN_INSYNC_REPLICAS: 2
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3  # Фактор репликации
+      KAFKA_NUM_PARTITIONS: 3
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"  # Автосоздание топиков
       KAFKA_DELETE_TOPIC_ENABLE: "true"  # Разрешение удаления топиков
     ports:
-      - "9093:9092"  # Порт для внутреннего доступа
-      - "29093:29092"  # Порт для внешнего доступа
+      - "9093:9093"  # Порт для внутреннего доступа
+      - "29093:29093"  # Порт для внешнего доступа
     networks:
       - de_infrastructure
 
   kafka3:
     image: confluentinc/cp-kafka:7.4.1
+    hostname: kafka3
     depends_on:
       - zookeeper
     environment:
       # Настройки для работы Kafka
       KAFKA_BROKER_ID: 3
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181  # Подключение к Zookeeper
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:9094,PLAINTEXT_HOST://localhost:29094  # Доступ внутри и снаружи сети
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:9094,PLAINTEXT_HOST://localhost:29094
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT  # Протоколы безопасности
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT  # Внутренний listener
+      KAFKA_MIN_INSYNC_REPLICAS: 2
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3  # Фактор репликации
+      KAFKA_NUM_PARTITIONS: 3
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"  # Автосоздание топиков
       KAFKA_DELETE_TOPIC_ENABLE: "true"  # Разрешение удаления топиков
     ports:
@@ -329,17 +339,59 @@ services:
     ports:
       - "8082:8080"
     depends_on:
-      - kafka
+      - kafka1
       - kafka2
       - kafka3
     environment:
       KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092,kafka2:9093,kafka3:9094
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:9092,kafka2:9093,kafka3:9094
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: connect
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect:8083
     networks:
       - de_infrastructure
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.4.1
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka1:9092,kafka2:9093,kafka3:9094'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    networks:
+      - de_infrastructure
+
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect-base:7.4.1
+    container_name: kafka-connect
+    hostname: kafka-connect
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+      - schema-registry
+    ports:
+      - "8083:8083"
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: "kafka1:9092,kafka2:9093,kafka3:9094"
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: kafka-connect
+      CONNECT_CONFIG_STORAGE_TOPIC: _connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: _connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: _connect-status
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
+      CONNECT_REST_ADVERTISED_HOST_NAME: "kafka-connect"
+      CONNECT_LOG4J_APPENDER_STDOUT_LAYOUT_CONVERSIONPATTERN: "[%d] %p %X{connector.context}%m (%c:%L)%n"
+      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components,/data/connect-jars
 
 networks:
   de_infrastructure:
